@@ -19,20 +19,14 @@ class homebrew_tap_version < Formula
   end
 
   on_linux do
-    if Hardware::CPU.arm? && Hardware::CPU.is_64_bit?
-      url "https://tools.veracode.com/veracode-cli/veracode-cli_2.28.0_linux_x86.tar.gz"
-      sha256 "dd067965fc8b59f58f6e6aa98fbeda464274f5b9abeefb0f758c0090fd774dd3"
-    elsif Hardware::CPU.intel?
-      url "https://tools.veracode.com/veracode-cli/veracode-cli_2.28.0_linux_x86.tar.gz"
-      sha256 "dd067965fc8b59f58f6e6aa98fbeda464274f5b9abeefb0f758c0090fd774dd3"
-    end
-
-    def install
-      bin.install "veracode"
-    end
+    url "https://tools.veracode.com/veracode-cli/veracode-cli_2.28.0_linux_x86.tar.gz"
+    sha256 "dd067965fc8b59f58f6e6aa98fbeda464274f5b9abeefb0f758c0090fd774dd3"
   end
-
-  test do
-    system "#{bin}/veracode", "--version"
+  def install
+    bin.install "veracode"
   end
+end
+test do
+  system "#{bin}/veracode", "--version"
+end
 end
