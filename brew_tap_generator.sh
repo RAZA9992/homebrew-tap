@@ -7,37 +7,8 @@ if [[ ! -f "$CHECKSUMS_FILE" ]]; then
   exit 1
 fi
 
-# Initialize variables for SHA256 checksums and version
-SHA256_MACOS_ARM64=""
-SHA256_MACOS_X86=""
-SHA256_LINUX_X86=""
-VERSION=""
-
-# Extract SHA256 checksums and version from checksums.txt
-index=1
-total_len=$(awk 'END { print NR }' "$CHECKSUMS_FILE")
-while [ $index -le $total_len ]; do
-    line=$(awk "NR==$index {print}" "$CHECKSUMS_FILE")
-    checksum=$(echo "$line" | awk '{print $1}')
-    arc=$(echo "$line" | awk '{print $2}')
-
-    if [[ $arc == *"linux_x86"* ]]; then
-        SHA256_LINUX_X86=$checksum
-    elif [[ $arc == *"macosx_arm64"* ]]; then
-        SHA256_MACOS_ARM64=$checksum
-    elif [[ $arc == *"macosx_x86"* ]]; then
-        SHA256_MACOS_X86=$checksum
-    fi
-
-    # Extract version from filename
-    if [[ -z $VERSION ]]; then
-        if [[ $arc =~ veracode-cli_([0-9]+\.[0-9]+\.[0-9]+)_ ]]; then
-            VERSION=${BASH_REMATCH[1]}
-        fi
-    fi
-
-    ((index++))
-done
+# Extract version number using grep and sed
+VERSION=$(grep -oE 'veracode-cli_[0-9]+\.[0-9]+\.[0-9]+' "$CHECKSUMS_FILE" | head -1 | sed 's/veracode-cli_//')
 
 # Verify that a version was found
 if [[ -z $VERSION ]]; then
@@ -45,16 +16,37 @@ if [[ -z $VERSION ]]; then
   exit 1
 fi
 
+# Initialize variables for SHA256 checksums and version
+SHA256_MACOS_ARM64=""
+SHA256_MACOS_X86=""
+SHA256_LINUX_X86=""
+
+# Extract SHA256 checksums and version from checksums.txt
+index=0
+total_len=$(awk 'END { print NR }' ./out/checksums.txt)
+while [ $index -le $total_len ]; do
+    arc=$(awk "NR==$index {printf \$2 \" \"}" ./out/checksums.txt)
+    if [[ $arc == *"linux_x86"* ]]; then
+        SHA256_LINUX_x86=$(awk "NR==$index {printf \$1}" ./out/checksums.txt)
+    elif [[ $arc == *"macosx_arm64"* ]]; then
+        SHA256_MACOS_arm64=$(awk "NR==$index {printf \$1}" ./out/checksums.txt)
+    elif [[ $arc == *"macosx_x86"* ]]; then
+        SHA256_MACOS_x86=$(awk "NR==$index {printf \$1}" ./out/checksums.txt)
+    fi
+    ((index++))
+done
+
+
 # Path to the updated formula
 UPDATED_FORMULA_PATH="formula/veracode-cli.rb"
 
 # Function to update the formula for a specific version
 update_formula() {
-  local VERSION=$1
-  local formula_name="veracode-cli@${VERSION}.rb"
+  local version=$1
+  local formula_name="veracode-cli@${version}.rb"
 
   # Replace placeholders with actual values
-  sed "s/VERSION_PLACEHOLDER/$VERSION/g; \
+  sed "s/VERSION_PLACEHOLDER/$version/g; \
        s/SHA256_MACOS_ARM64_PLACEHOLDER/$SHA256_MACOS_ARM64/g; \
        s/SHA256_MACOS_X86_PLACEHOLDER/$SHA256_MACOS_X86/g; \
        s/SHA256_LINUX_X86_PLACEHOLDER/$SHA256_LINUX_X86/g" \
