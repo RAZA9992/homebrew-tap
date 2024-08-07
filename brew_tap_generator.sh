@@ -15,7 +15,7 @@ SHA256_LINUX_X86=""
 # Verify that checksums.txt exists
 CHECKSUMS_FILE="checksums.txt"
 if [[ ! -f "$CHECKSUMS_FILE" ]]; then
-  echo "Error: checksums.txt file not found in ./out/"
+  echo "Error: checksums.txt file not found"
   exit 1
 fi
 
