@@ -43,7 +43,7 @@ NEW_BRANCH="update-formula-$PREVIOUS_VERSION"
 PR_TITLE="Update Homebrew Formula to $PREVIOUS_VERSION"
 PR_BODY="This PR updates the Homebrew formula to the version $PREVIOUS_VERSION."
 
-# Navigate to the formula directory (optional, if you are not already in the root directory)
+# Navigate to the formula directory
 cd ${HOMEBREW_REPO}/Formula
 
 # Check if there are any changes
@@ -107,110 +107,3 @@ done
 git config --global --unset-all user.name
 git config --global --unset-all user.email
 rm -rf ../../${HOMEBREW_REPO}
-
-
-
-
-
-
-
-
-# Check if veracode-cli.rb already exists
-if [[ -f "$UPDATED_FORMULA_PATH" ]]; then
-  # Extract the existing version from the formula
-  EXISTING_VERSION=$(awk 'NR==4 {print $2}' "$UPDATED_FORMULA_PATH" | tr -d '"')
-
-  # Rename the existing formula file
-  mv "$UPDATED_FORMULA_PATH" "$FORMULA_PATH/veracode-cli@${EXISTING_VERSION}.rb"
-fi
-
-# Update the formula for the new version
-update_formula "$VERSION"
-
-# List and sort veracode-cli files by version
-VERACODE_FILES=($(ls "$FORMULA_PATH/veracode-cli@"* | sort -V))
-
-# Count the number of versioned files
-FILE_COUNT=${#VERACODE_FILES[@]}
-
-# Keep only the 5 most recent versions by removing the oldest
-if [[ $FILE_COUNT -gt 5 ]]; then
-  FILES_TO_REMOVE=$((FILE_COUNT - 5))
-  for ((i=0; i<$FILES_TO_REMOVE; i++)); do
-    rm -f "${VERACODE_FILES[$i]}"
-  done
-fi
-
-# Function to commit and push changes to GitHub
-push_changes_to_github() {
-  local branch_name=$1
-
-  # Configure Git
-  git config --global user.email "razauddin99@gmail.com"
-  git config --global user.name "$GITHUB_USER"
-
-  # Create a new branch
-  git checkout -b "$branch_name"
-
-  # Add changes to git
-  git add "$FORMULA_PATH"
-
-  # Commit the changes
-  git commit -m "Update Homebrew formula to version $VERSION"
-
-  # Push the branch to GitHub
-  git push -u origin "$branch_name"
-}
-
-# Function to create a pull request on GitHub
-create_pull_request() {
-  local branch_name=$1
-
-  # Create a pull request on GitHub
-  local response=$(curl -s -u "$GITHUB_USER:$GITHUB_API_TOKEN" -X POST \
-    -d "{\"title\":\"Update Homebrew formula to version $VERSION\",\"head\":\"$branch_name\",\"base\":\"main\"}" \
-    "https://api.github.com/repos/$GITHUB_USER/$GITHUB_REPO/pulls")
-
-  echo "$response" | jq -r '.url'
-}
-
-# Function to monitor the pull request status
-monitor_pull_request() {
-  local pr_url=$1
-
-  while true; do
-    sleep 60  # Check every minute
-    local status=$(curl -s -u "$GITHUB_USER:$GITHUB_API_TOKEN" "$pr_url" | jq -r '.mergeable_state')
-    if [[ "$status" == "clean" ]]; then
-      echo "Pull request is ready to be merged."
-      break
-    elif [[ "$status" == "dirty" ]]; then
-      echo "Pull request cannot be merged automatically."
-      exit 1
-    else
-      echo "Pull request status: $status. Checking again in 1 minute."
-    fi
-  done
-}
-
-# Function to merge the pull request
-merge_pull_request() {
-  local pr_url=$1
-
-  curl -s -u "$GITHUB_USER:$GITHUB_API_TOKEN" -X PUT \
-    -d "{\"commit_title\":\"Merging pull request for version $VERSION\",\"merge_method\":\"merge\"}" \
-    "$pr_url/merge"
-}
-
-# Main script execution
-
-# Push changes to GitHub and create a pull request
-push_changes_to_github "$BRANCH_NAME"
-PR_URL=$(create_pull_request "$BRANCH_NAME")
-
-# Monitor the pull request status and merge if ready
-monitor_pull_request "$PR_URL"
-merge_pull_request "$PR_URL"
-
-# Print completion message
-echo "Homebrew tap formula updated, pull request merged successfully."
