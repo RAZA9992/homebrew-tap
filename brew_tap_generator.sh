@@ -9,7 +9,7 @@ else
 fi
 
 # Path to the formula directory
-FORMULA_DIR="formula"
+FORMULA_DIR="Formula"
 
 # Extract the previous version 
 PREVIOUS_VERSION=$(awk 'NR==4 {print $2}' "$FORMULA_DIR/veracode-cli.rb" | tr -d '"')
@@ -20,7 +20,7 @@ OLDEST_VERSION_FILE=$(ls "$FORMULA_DIR/veracode-cli@*.rb" | sort -V | head -n 1)
 # Rename the oldest version file to the previous version
 mv "$OLDEST_VERSION_FILE" "$FORMULA_DIR/veracode-cli@$PREVIOUS_VERSION.rb"
 
-# Extract SHA256 values for all architectures from the current cli.rb
+# Extract SHA256 values for all architectures from the current veracode-cli.rb
 SHA256_MACOS_ARM64=$(awk '/arm64/ {getline; print $2}' "$FORMULA_DIR/veracode-cli.rb" | tr -d '"')
 SHA256_MACOS_X86=$(awk '/x86/ && /macosx/ {getline; print $2}' "$FORMULA_DIR/veracode-cli.rb" | tr -d '"')
 SHA256_LINUX_X86=$(awk '/x86/ && /linux/ {getline; print $2}' "$FORMULA_DIR/veracode-cli.rb" | tr -d '"')

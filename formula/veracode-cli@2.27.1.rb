@@ -1,4 +1,4 @@
-class VeracodeCli < Formula
+class VeracodeCliAT2271 < Formula
   desc "This is a homebrew formula for Veracode CLI"
   homepage "https://www.veracode.com"
   version "2.27.1"

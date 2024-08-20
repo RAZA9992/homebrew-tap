@@ -1,7 +1,7 @@
 class VeracodeCli < Formula
     desc "You use the Veracode CLI to perform various actions for testing the security of your applications."
     homepage "https://www.veracode.com"
-    version "2.26.0"
+    version "2.28.0"
     license "MIT"
   
     on_macos do
@@ -19,18 +19,25 @@ class VeracodeCli < Formula
     end
   
     on_linux do
+      if Hardware::CPU.arm? && Hardware::CPU.is_64_bit?
+        url "https://tools.veracode.com/veracode-cli/veracode-cli_2.28.0_linux_x86.tar.gz"
+        sha256 "dd067965fc8b59f58f6e6aa98fbeda464274f5b9abeefb0f758c0090fd774dd3"
+  
+        def install
+          bin.install "veracode"
+        end
+      fi
       if Hardware::CPU.intel?
         url "https://tools.veracode.com/veracode-cli/veracode-cli_2.28.0_linux_x86.tar.gz"
         sha256 "dd067965fc8b59f58f6e6aa98fbeda464274f5b9abeefb0f758c0090fd774dd3"
-      end
   
-      def install
-        bin.install "veracode"
-      end
+        def install
+          bin.install "veracode"
+        end
+      fi
     end
   
     test do
-      system "#{bin}/veracode", "version"
+      system "#{bin}/veracode --version"
     end
   end
-  
