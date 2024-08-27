@@ -16,11 +16,13 @@ git config --global user.name ${GITHUB_USER_NAME}
 
 # Add the latest formula to homebrew-tap repo
 git clone https://github.com/veracode/${HOMEBREW_REPO}.git
-cd ${HOMEBREW_REPO}/Formula
 
 # Create a new branch with a name based on the version
 BRANCH_NAME="homebrew-cli-release-$VERSION"
 git checkout -b $BRANCH_NAME
+
+# Switch to the Formula Directory
+cd ${HOMEBREW_REPO}/Formula
 
 # Check if veracode-cli.rb already exists
 if [[ -f veracode-cli.rb ]]; then
@@ -41,13 +43,12 @@ FILE_COUNT=${#VERACODE_FILES[@]}
 if [[ $FILE_COUNT -gt 4 ]]; then
   FILES_TO_REMOVE=$((FILE_COUNT - 4))
   for ((i=0; i<$FILES_TO_REMOVE; i++)); do
-    rm -f "${VERACODE_FILES[$i]}"
-    git rm "${VERACODE_FILES[$i]}"
+    rm -rf "${VERACODE_FILES[$i]}"
   done
 fi
 
-# Push the latest formula to homebrew-tap repo
-git add veracode-cli.rb
+# Push the latest changes to homebrew-tap repo, use -A to add deleted formula files as well in the commit
+git add -A
 git commit -m "Brew formula update for veracode-cli version $VERSION"
 git remote set-url origin https://${GITHUB_USER_NAME}:${GITHUB_TOKEN}@github.com/veracode/${HOMEBREW_REPO}.git
 git push origin $BRANCH_NAME
